@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIDoc - Assistência Médica com IA</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Feather Icons for modern minimalist icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i data-feather="activity" class="logo-icon"></i>
+                    <span>AIDoc</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <i data-feather="grid"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-view="patients">
+                    <i data-feather="users"></i>
+                    <span>Pacientes</span>
+                </a>
+                <a href="#" class="nav-item" data-view="exams">
+                    <i data-feather="file-text"></i>
+                    <span>Exames</span>
+                </a>
+                <a href="#" class="nav-item" data-view="analysis">
+                    <i data-feather="cpu"></i>
+                    <span>IA Analysis</span>
+                </a>
+                <a href="#" class="nav-item" data-view="settings">
+                    <i data-feather="settings"></i>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar">DR</div>
+                    <div class="user-info">
+                        <span class="user-name">Dr. Roberto M.</span>
+                        <span class="user-role">Clínica Geral</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="search-bar">
+                    <i data-feather="search"></i>
+                    <input type="text" placeholder="Buscar pacientes, exames...">
+                </div>
+                <div class="topbar-actions">
+                    <button class="icon-btn"><i data-feather="bell"></i><span class="badge">3</span></button>
+                    <button class="btn btn-primary" id="btn-new-analysis">
+                        <i data-feather="plus"></i> Nova Análise
+                    </button>
+                </div>
+            </header>
+
+            <!-- Views Container -->
+            <div class="views-container">
+                
+                <!-- DASHBOARD VIEW -->
+                <section id="view-dashboard" class="view active">
+                    <div class="view-header">
+                        <h2>Dashboard</h2>
+                        <p>Visão geral do sistema e análises recentes.</p>
+                    </div>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon bg-blue-light"><i data-feather="file-text" class="text-blue"></i></div>
+                            <div class="metric-content">
+                                <span class="metric-label">Exames Hoje</span>
+                                <h3 class="metric-value">24</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon bg-red-light"><i data-feather="alert-circle" class="text-red"></i></div>
+                            <div class="metric-content">
+                                <span class="metric-label">Casos Críticos</span>
+                                <h3 class="metric-value">3</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon bg-yellow-light"><i data-feather="clock" class="text-yellow"></i></div>
+                            <div class="metric-content">
+                                <span class="metric-label">Em Análise</span>
+                                <h3 class="metric-value">5</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon bg-green-light"><i data-feather="users" class="text-green"></i></div>
+                            <div class="metric-content">
+                                <span class="metric-label">Pacientes</span>
+                                <h3 class="metric-value">128</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recent-exams-section">
+                        <div class="section-header">
+                            <h3>Exames Recentes</h3>
+                            <button class="btn btn-text">Ver todos</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="table" id="recent-exams-table">
+                                <thead>
+                                    <tr>
+                                        <th>Paciente</th>
+                                        <th>Idade</th>
+                                        <th>Data</th>
+                                        <th>Status</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ANALYSIS VIEW -->
+                <section id="view-analysis" class="view">
+                    <div class="view-header">
+                        <h2>Análise de Exame com IA</h2>
+                        <p>Insira os dados do paciente e o laudo do exame para análise inteligente.</p>
+                    </div>
+
+                    <div class="analysis-layout">
+                        <!-- Form Section -->
+                        <div class="card analysis-form-card">
+                            <form id="analysis-form">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="patient-name">Nome do Paciente</label>
+                                        <input type="text" id="patient-name" placeholder="Ex: João da Silva" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="patient-age">Idade</label>
+                                        <input type="number" id="patient-age" placeholder="Ex: 58" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="patient-conditions">Condições Médicas (Opcional)</label>
+                                    <input type="text" id="patient-conditions" placeholder="Ex: Diabetes, Hipertensão">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Laudo do Exame</label>
+                                    <div class="upload-area" id="upload-area">
+                                        <i data-feather="upload-cloud"></i>
+                                        <p>Arraste um PDF ou clique para fazer upload</p>
+                                        <span class="upload-hint">ou cole o texto abaixo</span>
+                                    </div>
+                                    <textarea id="exam-text" rows="8" placeholder="Cole o resultado do exame aqui..." required></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-large w-100" id="btn-analyze">
+                                    <i data-feather="cpu"></i> Analisar com IA
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Results / Loading Section -->
+                        <div class="card results-card" id="results-container">
+                            <div class="empty-state" id="results-empty">
+                                <div class="empty-icon"><i data-feather="activity"></i></div>
+                                <h3>Aguardando Análise</h3>
+                                <p>Preencha os dados e clique em "Analisar com IA" para ver os resultados.</p>
+                            </div>
+
+                            <div class="loading-state hidden" id="results-loading">
+                                <div class="scanner"></div>
+                                <h3>Analisando Exame</h3>
+                                <p>Nossa IA está processando os dados clínicos...</p>
+                            </div>
+
+                            <div class="results-content hidden" id="results-content">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- PLACEHOLDER VIEWS -->
+                <section id="view-patients" class="view">
+                    <div class="view-header">
+                        <h2>Pacientes</h2>
+                        <p>Módulo em desenvolvimento.</p>
+                    </div>
+                </section>
+                <section id="view-exams" class="view">
+                    <div class="view-header">
+                        <h2>Todos os Exames</h2>
+                        <p>Módulo em desenvolvimento.</p>
+                    </div>
+                </section>
+                <section id="view-settings" class="view">
+                    <div class="view-header">
+                        <h2>Configurações</h2>
+                        <p>Módulo em desenvolvimento.</p>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/analysis.js"></script>
+    <script src="js/results.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
