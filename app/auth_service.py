@@ -53,6 +53,14 @@ def ensure_guest_user() -> UserPublic:
     if _guest_cache is not None:
         return _guest_cache
 
+    if not settings.auth_required:
+        _guest_cache = UserPublic(
+            id='guest-local',
+            email=settings.guest_user_email,
+            nome=settings.guest_user_name,
+        )
+        return _guest_cache
+
     try:
         _guest_cache = _sign_in_guest_user()
         return _guest_cache

@@ -250,6 +250,8 @@ def chamar_ia(task: str, payload: dict[str, Any]) -> dict[str, Any]:
         return _mock_call(task, payload)
 
     if provider == 'deepseek':
+        if not settings.ai_api_key:
+            return _mock_call(task, payload)
         return _deepseek_call(task, payload)
 
     if provider == 'custom_http':

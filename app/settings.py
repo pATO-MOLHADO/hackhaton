@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     supabase_anon_key: str | None = None
     supabase_table: str = 'exam_analyses'
 
-    auth_required: bool = True
+    auth_required: bool = False
     guest_user_email: str = 'guest@aidoc.local'
     guest_user_password: str = 'AIDocGuest#2026'
     guest_user_name: str = 'AIDoc Guest'

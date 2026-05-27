@@ -134,7 +134,10 @@ def save_analysis(row: dict[str, Any]) -> None:
         except Exception:
             pass
 
-    _save_analysis_v2(client, row)
+    try:
+        _save_analysis_v2(client, row)
+    except Exception:
+        return
 
 
 def list_recent_analyses(user_id: str, limit: int = 20) -> list[dict[str, Any]]:
