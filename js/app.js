@@ -7,6 +7,7 @@ const TOUR_STORAGE_KEY  = 'aidoc.tour.completed.v1';
 
 let _entryCompleted = false;
 const _publicViews  = new Set(['entry', 'login', 'register']);
+const _navHistory   = [];
 
 // ── Navbar: mostra itens certos conforme estado de auth ───────────────────────
 function updateNavbar(loggedIn) {
@@ -21,12 +22,26 @@ function updateNavbar(loggedIn) {
 window.switchView = function(viewId, options = {}) {
     if (!_entryCompleted && !_publicViews.has(viewId)) viewId = 'entry';
 
+    // Registra histórico de navegação
+    const current = document.querySelector('.app-content .view.active')?.id?.replace('view-', '');
+    if (current && current !== viewId && !options.back) {
+        _navHistory.push(current);
+        if (_navHistory.length > 20) _navHistory.shift();
+    }
+
     document.querySelectorAll('#navbar-nav .nav-item').forEach(item => {
         item.classList.toggle('active', item.dataset.view === viewId);
     });
     document.querySelectorAll('.app-content .view').forEach(view => {
         view.classList.toggle('active', view.id === `view-${viewId}`);
     });
+
+    // Mostra/esconde botão voltar
+    const backBtn = document.getElementById('btn-nav-back');
+    if (backBtn) {
+        const showBack = _entryCompleted && _navHistory.length > 0;
+        backBtn.style.display = showBack ? 'inline-flex' : 'none';
+    }
 
     if (!options.keepTour) window.closeTour?.();
 };
@@ -107,6 +122,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-new-analysis')?.addEventListener('click',   () => window.switchView('analysis'));
     document.getElementById('btn-quick-analysis')?.addEventListener('click', () => window.switchView('analysis'));
+
+    // ── Botão Voltar ───────────────────────────────────────────────────────────
+    document.getElementById('btn-nav-back')?.addEventListener('click', () => {
+        const prev = _navHistory.pop();
+        if (prev) window.switchView(prev, { back: true });
+    });
 
     // ── Logout ─────────────────────────────────────────────────────────────────
     document.querySelector('.user-profile')?.addEventListener('click', () => {
