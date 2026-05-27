@@ -380,6 +380,18 @@ textarea { resize: vertical; min-height: 120px; }
 }
 .nav-item:hover { color: white; background: rgba(255,255,255,0.1); }
 .nav-item.active { background: var(--color-primary); color: white; }
+body.entry-required .nav-item[data-view="dashboard"],
+body.entry-required .nav-item[data-view="analysis"],
+body.entry-required .nav-item[data-view="patients"] {
+    opacity: 0.42;
+    cursor: not-allowed;
+}
+body.entry-required .nav-item[data-view="dashboard"]:hover,
+body.entry-required .nav-item[data-view="analysis"]:hover,
+body.entry-required .nav-item[data-view="patients"]:hover {
+    background: transparent;
+    color: var(--color-sidebar-text);
+}
 
 .header-search {
     display: flex;
@@ -441,15 +453,116 @@ textarea { resize: vertical; min-height: 120px; }
 /* ==========================================================================
    AUTH SCREEN
    ========================================================================== */
+.site-entry {
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) minmax(340px, 520px);
+    gap: clamp(24px, 5vw, 72px);
+    align-items: center;
+    min-height: calc(100vh - 132px);
+    padding: clamp(22px, 4vw, 44px);
+    border: 1px solid var(--clinical-line);
+    border-radius: var(--radius-xl);
+    background:
+        linear-gradient(135deg, rgba(16, 185, 129, 0.10), transparent 36%),
+        var(--surface-panel);
+    box-shadow: var(--shadow-premium);
+}
+
+.site-entry-main h1 {
+    max-width: 760px;
+    font-size: clamp(42px, 7vw, 76px);
+    line-height: 0.96;
+    letter-spacing: 0;
+    margin-bottom: 18px;
+}
+
+.site-entry-main p {
+    max-width: 620px;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+    margin-bottom: 28px;
+}
+
+.entry-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.entry-preview {
+    border: 1px solid var(--clinical-line);
+    border-radius: var(--radius-xl);
+    background: var(--surface-elevated);
+    box-shadow: var(--shadow-premium);
+    padding: 20px;
+}
+
+.entry-preview-header {
+    display: flex;
+    gap: 7px;
+    margin-bottom: 18px;
+}
+
+.entry-preview-header span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-border);
+}
+
+.entry-preview-row {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    background: var(--surface-subtle);
+    margin-bottom: 12px;
+}
+
+.entry-preview-row:last-child {
+    margin-bottom: 0;
+}
+
+.entry-preview-row i {
+    width: 42px;
+    height: 42px;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    color: var(--color-primary-dark);
+    background: var(--color-primary-light);
+}
+
+.entry-preview-row.alert i {
+    color: var(--color-warning-dark);
+    background: var(--color-warning-light);
+}
+
+.entry-preview-row strong,
+.entry-preview-row small {
+    display: block;
+}
+
+.entry-preview-row small {
+    color: var(--color-text-muted);
+    margin-top: 3px;
+}
+
 .auth-page {
     display: grid;
     grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 520px);
     gap: clamp(24px, 5vw, 72px);
     align-items: center;
+    min-height: calc(100vh - 132px);
     padding: clamp(22px, 4vw, 44px);
+    border: 1px solid var(--clinical-line);
+    border-radius: var(--radius-xl);
     background:
         linear-gradient(135deg, rgba(16, 185, 129, 0.12), transparent 34%),
         linear-gradient(180deg, #fbfefd 0%, #f3f8f6 52%, #eef5f3 100%);
+    box-shadow: var(--shadow-premium);
 }
 
 body[data-theme="dark"] .auth-page {
@@ -1047,16 +1160,22 @@ body[data-theme="dark"] .clinical-questions {
     position: fixed;
     inset: 0;
     z-index: 1200;
-    background: rgba(2, 6, 23, 0.6);
+    background: transparent;
+    pointer-events: auto;
 }
 
 .tour-highlight {
     position: fixed;
-    border: 2px solid var(--color-primary);
+    border: 2px solid #ffffff;
     border-radius: 14px;
-    box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.45), 0 0 0 4px rgba(16, 185, 129, 0.2);
+    box-shadow:
+        0 0 0 9999px rgba(2, 6, 23, 0.64),
+        0 0 0 5px rgba(16, 185, 129, 0.34),
+        0 0 34px rgba(255, 255, 255, 0.28);
     transition: all 0.25s ease;
     pointer-events: none;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: none;
 }
 
 .tour-card {
@@ -2297,18 +2416,20 @@ body[data-theme="dark"] .triage-item.critical {
     .profile-status {
         justify-content: flex-start;
     }
-.auth-page {
-        position: fixed;
-        overflow-y: auto;
+    .site-entry,
+    .auth-page {
         grid-template-columns: 1fr;
         align-items: start;
+        min-height: auto;
         padding: 22px 14px;
     }
 
+    .site-entry-main h1,
     .auth-brand-panel h1 {
         font-size: 34px;
     }
 
+    .site-entry-main p,
     .auth-brand-panel p {
         font-size: var(--font-size-base);
     }
