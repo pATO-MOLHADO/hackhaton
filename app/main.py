@@ -5,6 +5,7 @@ from .analyzer import analyze_file_text, analyze_text, chat_about_exam
 from .auth_service import guest_auth_session_response, login_user, signup_user
 from .db import list_recent_analyses, save_analysis
 from .deps import get_current_user
+from .file_text_extractor import ExtractionError, extract_text_from_upload
 from .models import (
     AnalysisRequest,
     AnalysisResponse,
@@ -18,7 +19,7 @@ from .models import (
 )
 from .settings import settings
 
-app = FastAPI(title='AIDoc Backend', version='2.2.0')
+app = FastAPI(title='AIDoc Backend', version='2.3.0')
 
 app.add_middleware(
     CORSMiddleware,
@@ -107,9 +108,11 @@ async def analisar_arquivo(
 ) -> AnalysisResponse:
     try:
         content = await arquivo.read()
-        text = content.decode('utf-8', errors='ignore')
-        if not text.strip():
-            text = f'Arquivo {arquivo.filename} recebido ({len(content)} bytes).'
+        text = extract_text_from_upload(
+            file_bytes=content,
+            filename=arquivo.filename,
+            content_type=arquivo.content_type,
+        )
 
         result = analyze_file_text(
             nome_paciente=nome_paciente,
@@ -133,6 +136,8 @@ async def analisar_arquivo(
         )
 
         return result
+    except ExtractionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except HTTPException:
         raise
     except Exception as exc:
