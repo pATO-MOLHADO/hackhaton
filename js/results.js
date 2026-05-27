@@ -39,10 +39,11 @@ function renderResults(data) {
                         const parts = val.split(':');
                         const name = parts[0] ? parts[0].trim() : 'Marcador';
                         const value = parts[1] ? parts[1].trim() : val;
-                        // Simulating High or Low just for the mock (if it contains 'Alto' or similar)
-                        const isHigh = value.toLowerCase().includes('alto') || value.toLowerCase().includes('acima');
-                        const valClass = isHigh ? 'val-high' : 'val-low';
-                        const icon = isHigh ? 'arrow-up-right' : 'arrow-down-right';
+                        // Classifica como alto, baixo ou dentro do esperado
+                        const isHigh = value.toLowerCase().includes('alto') || value.toLowerCase().includes('acima') || value.toLowerCase().includes('elevad');
+                        const isLow = value.toLowerCase().includes('baixo') || value.toLowerCase().includes('abaixo') || value.toLowerCase().includes('reduzid');
+                        const valClass = isHigh ? 'val-high' : isLow ? 'val-low' : 'val-normal';
+                        const icon = isHigh ? 'arrow-up-right' : isLow ? 'arrow-down-right' : 'minus';
                         
                         return `
                             <div class="altered-item">
@@ -131,7 +132,7 @@ function renderResults(data) {
             ${actionsHTML}
 
             <div style="margin-top: 16px; text-align: right;">
-                <button class="btn btn-text" onclick="resetAnalysis()" style="font-size: 13px;">
+                <button class="btn btn-text" id="btn-reset-analysis" style="font-size: 13px;">
                     <i data-feather="refresh-ccw"></i> Nova Análise
                 </button>
             </div>
@@ -139,8 +140,9 @@ function renderResults(data) {
         </div>
     `;
 
-    // Initialize Feather Icons in the new HTML
+    // Bind reset button after render
     setTimeout(() => {
+        document.getElementById('btn-reset-analysis')?.addEventListener('click', resetAnalysis);
         if (typeof feather !== 'undefined') feather.replace();
     }, 10);
 }

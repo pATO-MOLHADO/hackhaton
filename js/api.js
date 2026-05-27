@@ -1,6 +1,5 @@
 /**
- * api.js - API Service Integration
- * Handles requests to the FastAPI backend.
+ * api.js - Integração com o backend FastAPI.
  */
 
 const API_BASE_URL = 'https://aidoc-4li5.onrender.com';

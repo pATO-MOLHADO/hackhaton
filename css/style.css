@@ -2449,3 +2449,178 @@ body[data-theme="dark"] .triage-item.critical {
 }
 
 
+
+/* ==========================================================================
+   MELHORIAS DE PERFIL DE PACIENTE
+   ========================================================================== */
+
+/* Avatar grande no perfil */
+.profile-header-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+}
+
+.profile-avatar-large {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-xl);
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 22px;
+    flex-shrink: 0;
+    border: 2px solid var(--color-primary);
+}
+
+.profile-avatar-large.avatar-critical {
+    background: var(--color-danger-light);
+    color: var(--color-danger-dark);
+    border-color: var(--color-danger);
+}
+
+.avatar-critical {
+    background: var(--color-danger-light) !important;
+    color: var(--color-danger-dark) !important;
+}
+
+/* Tendência de evolução */
+.profile-trend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.trend-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    font-weight: 600;
+}
+
+.trend-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* Botão pequeno */
+.btn-sm {
+    padding: 7px 14px;
+    font-size: var(--font-size-xs);
+}
+
+/* Métricas com 4 colunas */
+.profile-metrics {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Lista vazia de pacientes */
+.patient-empty-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--color-text-muted);
+    gap: 8px;
+}
+
+.patient-empty-list i {
+    width: 32px;
+    height: 32px;
+    color: var(--color-primary);
+    margin-bottom: 4px;
+}
+
+.patient-empty-list p {
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+.patient-empty-list small {
+    font-size: var(--font-size-xs);
+}
+
+/* Info da lista de pacientes */
+.patient-list-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+    text-align: left;
+}
+
+.patient-list-info strong {
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.patient-list-info small {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+/* Card crítico na lista */
+.patient-list-item.is-critical {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: linear-gradient(90deg, var(--color-danger-light), var(--surface-subtle) 80%);
+}
+
+/* Triage item clicável */
+.triage-item[data-patient-id]:hover {
+    cursor: pointer;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+/* Título de seção com ícone */
+.clinical-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Workspace: label de ajuda nos widgets */
+.widget-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    text-align: center;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.widget-hint i {
+    width: 12px;
+    height: 12px;
+}
+
+@media (max-width: 760px) {
+    .profile-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .profile-header-left {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .profile-trend {
+        justify-content: center;
+    }
+}

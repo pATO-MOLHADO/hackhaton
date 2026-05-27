@@ -1,5 +1,5 @@
 /**
- * dashboard.js - Modular clinical workspace.
+ * dashboard.js - Área de trabalho clínica modular.
  */
 
 const DASHBOARD_STORAGE_KEY = 'aidoc.modularDashboard.v2';
@@ -26,7 +26,7 @@ function renderDateHeader() {
         month: 'long'
     });
 
-    el.textContent = `Hoje: ${today}. Prioridades, fluxo e IA organizados para leitura clinica rapida.`;
+    el.textContent = `Hoje: ${today}. Prioridades, fluxo e IA organizados para leitura clínica rápida.`;
 }
 
 function patientInitials(name) {
@@ -38,7 +38,8 @@ function renderTriageList(containerId, items) {
     if (!container) return;
 
     container.innerHTML = items.map((item, index) => `
-        <div class="triage-item ${item.type}" style="animation: fadeIn 0.35s ease-out ${index * 0.05}s both;">
+        <div class="triage-item ${item.type}" style="animation: fadeIn 0.35s ease-out ${index * 0.05}s both;"
+             ${item.patientId ? `data-patient-id="${item.patientId}" role="button" tabindex="0" title="Ver perfil de ${item.name}"` : ''}>
             <div class="triage-info">
                 <div class="triage-avatar">${patientInitials(item.name)}</div>
                 <div class="triage-details">
@@ -54,13 +55,24 @@ function renderTriageList(containerId, items) {
             </div>
         </div>
     `).join('');
+
+    // Clique no card abre o perfil do paciente
+    container.querySelectorAll('[data-patient-id]').forEach(card => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+            if (typeof openPatientProfile === 'function') {
+                openPatientProfile(card.dataset.patientId);
+            }
+        });
+    });
 }
 
 function renderCriticalExams() {
     const patientItems = getDashboardPatientItems().filter(item => item.type === 'critical' || item.evolution === 'piora').slice(0, 3);
     renderTriageList('triage-critical', patientItems.length ? patientItems : [
-        { name: 'Roberto Silva', id: '#P-4592', time: '5 min', reason: 'Troponina elevada com risco cardiaco.', type: 'critical', action: 'Agir agora' },
-        { name: 'Helena Duarte', id: '#P-4596', time: '12 min', reason: 'D-dimero alto e dispneia relatada.', type: 'critical', action: 'Priorizar' },
+        { name: 'Roberto Silva', id: '#P-4592', time: '5 min', reason: 'Troponina elevada com risco cardíaco.', type: 'critical', action: 'Agir agora' },
+        { name: 'Helena Duarte', id: '#P-4596', time: '12 min', reason: 'D-dímero alto e dispneia relatada.', type: 'critical', action: 'Priorizar' },
         { name: 'Julia Costa', id: '#P-4590', time: '45 min', reason: 'Glicemia 250 mg/dL aguardando retorno.', type: 'attention', action: 'Revisar' }
     ]);
 }
@@ -75,7 +87,7 @@ function renderAIInsights() {
     const stats = [
         { label: 'Exames analisados', value: exams || '1.284', note: exams ? 'memória clínica local' : '+12% na semana', icon: 'activity' },
         { label: 'Pacientes acompanhados', value: patients.length || '4', note: patients.length ? 'perfis com histórico' : 'base demonstrativa', icon: 'users' },
-        { label: 'Piora clínica', value: worsening || '2', note: worsening ? 'precisam revisão' : 'precisam acao', icon: 'alert-triangle' }
+        { label: 'Piora clínica', value: worsening || '2', note: worsening ? 'precisam revisão' : 'precisam de ação', icon: 'alert-triangle' }
     ];
 
     container.innerHTML = stats.map(stat => `
@@ -92,7 +104,7 @@ function renderPatientFlow() {
     if (!container) return;
 
     const data = [
-        ['Seg', 35], ['Ter', 42], ['Qua', 28], ['Qui', 50], ['Sex', 38], ['Sab', 15], ['Dom', 8]
+        ['Seg', 35], ['Ter', 42], ['Qua', 28], ['Qui', 50], ['Sex', 38], ['Sáb', 15], ['Dom', 8]
     ];
     const max = 50;
 
@@ -116,9 +128,9 @@ function renderPatientFlow() {
 function renderRecentPatients() {
     const patientItems = getDashboardPatientItems().filter(item => item.type !== 'critical').slice(0, 4);
     renderTriageList('triage-routine', patientItems.length ? patientItems : [
-        { name: 'Ricardo Mendes', id: '#P-4589', time: '2h', reason: 'Hemograma sem alteracoes relevantes.', type: 'routine', action: 'Aprovar' },
+        { name: 'Ricardo Mendes', id: '#P-4589', time: '2h', reason: 'Hemograma sem alterações relevantes.', type: 'routine', action: 'Aprovar' },
         { name: 'Fernanda Lima', id: '#P-4591', time: '3h', reason: 'Colesterol acima da meta individual.', type: 'attention', action: 'Revisar' },
-        { name: 'Mariana Torres', id: '#P-4586', time: 'Ontem', reason: 'Retorno pos-consulta registrado.', type: 'routine', action: 'Aprovar' }
+        { name: 'Mariana Torres', id: '#P-4586', time: 'Ontem', reason: 'Retorno pós-consulta registrado.', type: 'routine', action: 'Aprovar' }
     ]);
 }
 
@@ -130,6 +142,7 @@ function getDashboardPatientItems() {
         return {
             name: patient.nome,
             id: `#${patient.id.slice(0, 8).toUpperCase()}`,
+            patientId: patient.id,
             time: latest.dateLabel || patient.updatedAt || 'Agora',
             reason: latest.comparacao_com_anterior || latest.resumo || 'Histórico clínico atualizado.',
             type: patient.estado_clinico === 'piora' ? 'critical' : status,
@@ -145,8 +158,8 @@ function renderUpcomingReviews() {
 
     const reviews = [
         ['14:30', 'Roberto Silva', 'Cardiologia urgente'],
-        ['15:00', 'Dra. Marina Rocha', 'Discussao de caso'],
-        ['16:15', 'Helena Duarte', 'Revisao de imagem']
+        ['15:00', 'Dra. Marina Rocha', 'Discussão de caso'],
+        ['16:15', 'Helena Duarte', 'Revisão de imagem']
     ];
 
     container.innerHTML = reviews.map(([time, name, context]) => `
@@ -167,8 +180,8 @@ function renderFollowups() {
 
     container.innerHTML = [
         ['Maria Oliveira', 'Retorno de HbA1c em 7 dias'],
-        ['Paulo Nunes', 'Confirmar adesao medicamentosa'],
-        ['Livia Andrade', 'Enviar orientacao pos-exame']
+        ['Paulo Nunes', 'Confirmar adesão medicamentosa'],
+        ['Livia Andrade', 'Enviar orientação pós-exame']
     ].map(([name, task]) => `
         <div class="compact-row">
             <span><strong>${name}</strong><small>${task}</small></span>
@@ -183,7 +196,7 @@ function renderNotifications() {
 
     container.innerHTML = [
         ['Novo laudo pronto', '3 exames foram classificados pela IA.'],
-        ['Equipe de enfermagem', 'Solicitou revisao para leito 204.'],
+        ['Equipe de enfermagem', 'Solicitou revisão para leito 204.'],
         ['Sistema', 'Layout salvo automaticamente.']
     ].map(([title, body]) => `
         <div class="notification-row">
