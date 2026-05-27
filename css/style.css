@@ -2656,3 +2656,162 @@ body[data-theme="dark"] .triage-item.critical {
     z-index: 1250;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ==========================================================================
+   CENTRAL DE ALERTAS — Drawer de Notificações
+   ========================================================================== */
+#notif-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    pointer-events: none;
+    visibility: hidden;
+}
+#notif-drawer.open {
+    pointer-events: auto;
+    visibility: visible;
+}
+
+#notif-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(2px);
+}
+#notif-drawer.open #notif-backdrop { opacity: 1; }
+
+#notif-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(420px, 100vw);
+    background: var(--color-bg-surface);
+    border-left: 1px solid var(--color-border);
+    box-shadow: -20px 0 60px rgba(2, 6, 23, 0.18);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+#notif-drawer.open #notif-panel { transform: translateX(0); }
+
+.notif-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-surface);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.notif-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 16px;
+}
+.notif-header-left i { width: 20px; height: 20px; color: var(--color-primary); }
+
+#notif-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-light);
+    background: var(--surface-subtle);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+}
+.notif-item:hover { border-color: var(--color-primary); background: var(--color-primary-light); }
+.notif-item.read { opacity: 0.6; }
+.notif-item.unread { background: var(--color-bg-surface); border-color: var(--color-border); }
+
+.notif-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.notif-icon-wrap i { width: 18px; height: 18px; }
+
+.notif-body { flex: 1; min-width: 0; }
+.notif-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.notif-text { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 8px; }
+.notif-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.notif-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+}
+.notif-time i { width: 11px; height: 11px; }
+
+.notif-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    flex-shrink: 0;
+    margin-top: 4px;
+    box-shadow: 0 0 6px var(--color-primary);
+}
+
+.notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--color-text-muted);
+    gap: 8px;
+}
+.notif-empty i { width: 40px; height: 40px; color: var(--color-primary); margin-bottom: 8px; }
+.notif-empty p { font-weight: 600; font-size: 15px; margin: 0; }
+.notif-empty small { font-size: 13px; }
+
+.notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--color-danger);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--color-bg-surface);
+    padding: 0 3px;
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    50% { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+}

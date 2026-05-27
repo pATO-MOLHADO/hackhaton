@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveToHistory({ nome_paciente, idade }, resultData);
             if (typeof savePatientAnalysis === 'function') savePatientAnalysis({ nome_paciente, idade, condicoes, texto }, resultData);
             if (typeof initDashboard === 'function') initDashboard();
+            window.dispatchEvent(new Event('aidoc:exam-analyzed'));
             if (typeof renderResults === 'function') renderResults(resultData);
 
             resultsLoading.classList.add('hidden');
