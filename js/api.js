@@ -1,7 +1,20 @@
 /**
- * api.js - API Service Integration
- * Handles requests to the FastAPI backend.
+ * api.js - Integração com o backend FastAPI.
  */
+
+// Garante que refreshIcons existe globalmente mesmo antes do dashboard.js carregar
+if (typeof window.refreshIcons === 'undefined') {
+    window.refreshIcons = function() {
+        if (typeof feather !== 'undefined') feather.replace();
+    };
+}
+
+// Garante que patientInitials existe globalmente
+if (typeof window.patientInitials === 'undefined') {
+    window.patientInitials = function(name) {
+        return String(name || '?').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+    };
+}
 
 const API_URL = 'http://localhost:8000/analisar-texto';
 

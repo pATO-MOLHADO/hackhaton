@@ -150,11 +150,9 @@ function getAttentionLabel(level) {
 
 function openPatientProfile(patientId) {
     selectedPatientKey = patientId;
-    // Navega para a view de pacientes
-    const navItem = document.querySelector('[data-view="patients"]');
-    if (navItem) navItem.click();
-    else {
-        // fallback direto
+    if (typeof window.switchView === 'function') {
+        window.switchView('patients');
+    } else {
         document.querySelectorAll('.app-content .view').forEach(v => v.classList.remove('active'));
         document.getElementById('view-patients')?.classList.add('active');
     }
@@ -370,8 +368,7 @@ function renderPatientProfileDetail(container, profile) {
     // Botão "Novo Exame" preenche o formulário de análise com dados do paciente
     container.querySelector('#btn-new-exam-for-patient')?.addEventListener('click', (e) => {
         const btn = e.currentTarget;
-        const navAnalysis = document.querySelector('[data-view="analysis"]');
-        if (navAnalysis) navAnalysis.click();
+        if (typeof window.switchView === 'function') window.switchView('analysis');
 
         setTimeout(() => {
             const nameField = document.getElementById('patient-name');
@@ -380,6 +377,9 @@ function renderPatientProfileDetail(container, profile) {
             if (nameField) nameField.value = btn.dataset.patientName;
             if (ageField)  ageField.value  = btn.dataset.patientAge;
             if (condField) condField.value = btn.dataset.patientConditions;
+            // Limpa resultado anterior
+            document.getElementById('results-content')?.classList.add('hidden');
+            document.getElementById('results-empty')?.classList.remove('hidden');
             document.getElementById('exam-text')?.focus();
         }, 150);
     });
