@@ -1,45 +1,323 @@
 /**
- * dashboard.js - Dashboard View Logic
- * Populates recent exams table with mock data.
+ * dashboard.js - Modular clinical workspace.
  */
 
-function initDashboard() {
-    const tableBody = document.querySelector('#recent-exams-table tbody');
-    if (!tableBody) return;
+const DASHBOARD_STORAGE_KEY = 'aidoc.modularDashboard.v1';
 
-    // Mock recent exams data
-    const recentExams = [
-        { name: 'Maria Oliveira', age: 42, date: 'Hoje, 09:30', status: 'normal' },
-        { name: 'Carlos Santos', age: 65, date: 'Hoje, 08:15', status: 'atencao' },
-        { name: 'Ana Souza', age: 28, date: 'Ontem, 16:40', status: 'normal' },
-        { name: 'Roberto Almeida', age: 58, date: 'Ontem, 14:20', status: 'critico' },
-        { name: 'Fernanda Lima', age: 35, date: 'Ontem, 10:05', status: 'normal' }
+function initDashboard() {
+    renderDateHeader();
+    renderCriticalExams();
+    renderAIInsights();
+    renderPatientFlow();
+    renderRecentPatients();
+    renderUpcomingReviews();
+    renderFollowups();
+    renderNotifications();
+    initModularDashboard();
+}
+
+function renderDateHeader() {
+    const el = document.getElementById('dashboard-date');
+    if (!el) return;
+
+    const today = new Date().toLocaleDateString('pt-BR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+    });
+
+    el.textContent = `Hoje e ${today}. Arraste, redimensione e minimize widgets conforme seu fluxo clinico.`;
+}
+
+function patientInitials(name) {
+    return name.split(' ').map(part => part[0]).slice(0, 2).join('').toUpperCase();
+}
+
+function renderTriageList(containerId, items) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = items.map((item, index) => `
+        <div class="triage-item ${item.type}" style="animation: fadeIn 0.35s ease-out ${index * 0.05}s both;">
+            <div class="triage-info">
+                <div class="triage-avatar">${patientInitials(item.name)}</div>
+                <div class="triage-details">
+                    <div class="triage-name">${item.name} <span class="patient-id">${item.id}</span></div>
+                    <div class="triage-reason">${item.reason}</div>
+                    <div class="triage-time"><i data-feather="clock"></i>${item.time}</div>
+                </div>
+            </div>
+            <div class="triage-actions">
+                <button class="${item.type === 'critical' ? 'btn btn-primary' : 'icon-btn'}" title="${item.action}">
+                    ${item.type === 'critical' ? item.action : '<i data-feather="check"></i>'}
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderCriticalExams() {
+    renderTriageList('triage-critical', [
+        { name: 'Roberto Silva', id: '#P-4592', time: '5 min', reason: 'Troponina elevada com risco cardiaco.', type: 'critical', action: 'Agir agora' },
+        { name: 'Helena Duarte', id: '#P-4596', time: '12 min', reason: 'D-dimero alto e dispneia relatada.', type: 'critical', action: 'Priorizar' },
+        { name: 'Julia Costa', id: '#P-4590', time: '45 min', reason: 'Glicemia 250 mg/dL aguardando retorno.', type: 'attention', action: 'Revisar' }
+    ]);
+}
+
+function renderAIInsights() {
+    const container = document.getElementById('global-insights');
+    if (!container) return;
+
+    const stats = [
+        { label: 'Exames analisados', value: '1.284', note: '+12% na semana', icon: 'activity' },
+        { label: 'Alertas criticos', value: '4', note: '2 precisam acao', icon: 'alert-triangle' },
+        { label: 'Tempo medio salvo', value: '38h', note: 'triagem automatizada', icon: 'zap' }
     ];
 
-    // Helper to get status label
-    const getStatusLabel = (status) => {
-        const labels = {
-            'normal': 'Normal',
-            'atencao': 'Atenção',
-            'critico': 'Crítico'
-        };
-        return labels[status] || status;
+    container.innerHTML = stats.map(stat => `
+        <div class="stat-mini">
+            <div class="stat-mini-label"><i data-feather="${stat.icon}"></i>${stat.label}</div>
+            <div class="stat-mini-val">${stat.value}</div>
+            <div class="stat-mini-note">${stat.note}</div>
+        </div>
+    `).join('');
+}
+
+function renderPatientFlow() {
+    const container = document.getElementById('bar-chart');
+    if (!container) return;
+
+    const data = [
+        ['Seg', 35], ['Ter', 42], ['Qua', 28], ['Qui', 50], ['Sex', 38], ['Sab', 15], ['Dom', 8]
+    ];
+    const max = 50;
+
+    container.innerHTML = `
+        <div class="y-axis"><span>50</span><span>25</span><span>0</span></div>
+        ${data.map(([label, value]) => `
+            <div class="bar-group">
+                <div class="bar" style="height:0%" data-height="${(value / max) * 100}%" title="${value} pacientes"></div>
+                <div class="bar-label">${label}</div>
+            </div>
+        `).join('')}
+    `;
+
+    requestAnimationFrame(() => {
+        container.querySelectorAll('.bar').forEach(bar => {
+            bar.style.height = bar.dataset.height;
+        });
+    });
+}
+
+function renderRecentPatients() {
+    renderTriageList('triage-routine', [
+        { name: 'Ricardo Mendes', id: '#P-4589', time: '2h', reason: 'Hemograma sem alteracoes relevantes.', type: 'routine', action: 'Aprovar' },
+        { name: 'Fernanda Lima', id: '#P-4591', time: '3h', reason: 'Colesterol acima da meta individual.', type: 'attention', action: 'Revisar' },
+        { name: 'Mariana Torres', id: '#P-4586', time: 'Ontem', reason: 'Retorno pos-consulta registrado.', type: 'routine', action: 'Aprovar' }
+    ]);
+}
+
+function renderUpcomingReviews() {
+    const container = document.getElementById('upcoming-appointments');
+    if (!container) return;
+
+    const reviews = [
+        ['14:30', 'Roberto Silva', 'Cardiologia urgente'],
+        ['15:00', 'Dra. Marina Rocha', 'Discussao de caso'],
+        ['16:15', 'Helena Duarte', 'Revisao de imagem']
+    ];
+
+    container.innerHTML = reviews.map(([time, name, context]) => `
+        <div class="appointment-card">
+            <div class="appt-icon"><i data-feather="calendar"></i></div>
+            <div class="appt-info">
+                <div class="appt-doc">${name}</div>
+                <div class="appt-spec">${context}</div>
+            </div>
+            <div class="appt-time">${time}</div>
+        </div>
+    `).join('');
+}
+
+function renderFollowups() {
+    const container = document.getElementById('followups-list');
+    if (!container) return;
+
+    container.innerHTML = [
+        ['Maria Oliveira', 'Retorno de HbA1c em 7 dias'],
+        ['Paulo Nunes', 'Confirmar adesao medicamentosa'],
+        ['Livia Andrade', 'Enviar orientacao pos-exame']
+    ].map(([name, task]) => `
+        <div class="compact-row">
+            <span><strong>${name}</strong><small>${task}</small></span>
+            <button class="icon-btn" title="Enviar"><i data-feather="send"></i></button>
+        </div>
+    `).join('');
+}
+
+function renderNotifications() {
+    const container = document.getElementById('notifications-list');
+    if (!container) return;
+
+    container.innerHTML = [
+        ['Novo laudo pronto', '3 exames foram classificados pela IA.'],
+        ['Equipe de enfermagem', 'Solicitou revisao para leito 204.'],
+        ['Sistema', 'Layout salvo automaticamente.']
+    ].map(([title, body]) => `
+        <div class="notification-row">
+            <i data-feather="bell"></i>
+            <span><strong>${title}</strong><small>${body}</small></span>
+        </div>
+    `).join('');
+}
+
+function initModularDashboard() {
+    const grid = document.getElementById('modular-dashboard');
+    if (!grid) return;
+
+    const widgets = Array.from(grid.querySelectorAll('.widget'));
+    let draggedWidget = null;
+
+    applySavedLayout(grid, widgets);
+    syncResizeControls(widgets);
+
+    widgets.forEach(widget => {
+        const header = widget.querySelector('.widget-header');
+        header.setAttribute('draggable', 'true');
+
+        header.addEventListener('dragstart', () => {
+            draggedWidget = widget;
+            widget.classList.add('dragging');
+        });
+
+        header.addEventListener('dragend', () => {
+            widget.classList.remove('dragging');
+            draggedWidget = null;
+            saveDashboardLayout(grid);
+        });
+
+        widget.addEventListener('dragover', event => {
+            event.preventDefault();
+            if (!draggedWidget || draggedWidget === widget) return;
+            widget.classList.add('drag-over');
+        });
+
+        widget.addEventListener('dragleave', () => widget.classList.remove('drag-over'));
+
+        widget.addEventListener('drop', event => {
+            event.preventDefault();
+            widget.classList.remove('drag-over');
+            if (!draggedWidget || draggedWidget === widget) return;
+
+            const widgetsNow = Array.from(grid.querySelectorAll('.widget'));
+            const targetIndex = widgetsNow.indexOf(widget);
+            const draggedIndex = widgetsNow.indexOf(draggedWidget);
+            grid.insertBefore(draggedWidget, draggedIndex < targetIndex ? widget.nextSibling : widget);
+            saveDashboardLayout(grid);
+        });
+
+        widget.querySelectorAll('.resize-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                setWidgetSize(widget, Number(button.dataset.size));
+                syncResizeControls([widget]);
+                saveDashboardLayout(grid);
+            });
+        });
+
+        widget.querySelector('.minimize-btn')?.addEventListener('click', () => {
+            widget.classList.toggle('minimized');
+            const icon = widget.classList.contains('minimized') ? 'plus' : 'minus';
+            widget.querySelector('.minimize-btn').innerHTML = `<i data-feather="${icon}"></i>`;
+            refreshIcons();
+            saveDashboardLayout(grid);
+        });
+
+        widget.querySelector('.expand-btn')?.addEventListener('click', () => {
+            widget.classList.toggle('expanded');
+            const icon = widget.classList.contains('expanded') ? 'minimize-2' : 'maximize-2';
+            widget.querySelector('.expand-btn').innerHTML = `<i data-feather="${icon}"></i>`;
+            setWidgetSize(widget, widget.classList.contains('expanded') ? 12 : Number(widget.dataset.col || widget.dataset.defaultCol || 6));
+            syncResizeControls([widget]);
+            refreshIcons();
+            saveDashboardLayout(grid);
+        });
+    });
+
+    document.getElementById('btn-reset-layout')?.addEventListener('click', () => {
+        localStorage.removeItem(DASHBOARD_STORAGE_KEY);
+        widgets
+            .sort((a, b) => Number(a.dataset.defaultOrder) - Number(b.dataset.defaultOrder))
+            .forEach(widget => {
+                widget.classList.remove('minimized', 'expanded');
+                setWidgetSize(widget, Number(widget.dataset.defaultCol || 6));
+                grid.appendChild(widget);
+            });
+        syncResizeControls(widgets);
+        refreshIcons();
+    });
+
+    refreshIcons();
+}
+
+function setWidgetSize(widget, size) {
+    widget.dataset.col = String(size);
+    widget.style.gridColumn = `span ${size}`;
+}
+
+function applySavedLayout(grid, widgets) {
+    const saved = readSavedLayout();
+    const byId = new Map(widgets.map(widget => [widget.id, widget]));
+    const orderedIds = saved?.order || widgets.sort((a, b) => Number(a.dataset.defaultOrder) - Number(b.dataset.defaultOrder)).map(w => w.id);
+
+    orderedIds.forEach(id => {
+        const widget = byId.get(id);
+        if (widget) grid.appendChild(widget);
+    });
+
+    widgets.forEach(widget => {
+        if (!grid.contains(widget)) grid.appendChild(widget);
+
+        const state = saved?.widgets?.[widget.id] || {};
+        setWidgetSize(widget, Number(state.col || widget.dataset.defaultCol || 6));
+        widget.classList.toggle('minimized', Boolean(state.minimized));
+        widget.classList.toggle('expanded', Boolean(state.expanded));
+    });
+}
+
+function saveDashboardLayout(grid) {
+    const widgets = Array.from(grid.querySelectorAll('.widget'));
+    const payload = {
+        order: widgets.map(widget => widget.id),
+        widgets: widgets.reduce((acc, widget) => {
+            acc[widget.id] = {
+                col: Number(widget.dataset.col || widget.dataset.defaultCol || 6),
+                minimized: widget.classList.contains('minimized'),
+                expanded: widget.classList.contains('expanded')
+            };
+            return acc;
+        }, {})
     };
 
-    // Render table rows
-    tableBody.innerHTML = recentExams.map(exam => `
-        <tr>
-            <td class="fw-500">${exam.name}</td>
-            <td class="text-muted">${exam.age} anos</td>
-            <td class="text-muted">${exam.date}</td>
-            <td>
-                <span class="status-badge ${exam.status}">
-                    ${getStatusLabel(exam.status)}
-                </span>
-            </td>
-            <td>
-                <button class="btn btn-text btn-sm">Ver análise</button>
-            </td>
-        </tr>
-    `).join('');
+    localStorage.setItem(DASHBOARD_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function readSavedLayout() {
+    try {
+        return JSON.parse(localStorage.getItem(DASHBOARD_STORAGE_KEY));
+    } catch (error) {
+        return null;
+    }
+}
+
+function syncResizeControls(widgets) {
+    widgets.forEach(widget => {
+        const col = Number(widget.dataset.col || widget.dataset.defaultCol || 6);
+        widget.querySelectorAll('.resize-btn').forEach(button => {
+            button.classList.toggle('active', Number(button.dataset.size) === col);
+        });
+    });
+}
+
+function refreshIcons() {
+    if (typeof feather !== 'undefined') feather.replace();
 }

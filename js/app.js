@@ -9,9 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
         feather.replace();
     }
 
-    // View Routing Logic
-    const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
-    const views = document.querySelectorAll('.views-container .view');
+    // ─────────────────────── View Routing ───────────────────────
+    const navItems = document.querySelectorAll('#navbar-nav .nav-item');
+    const views = document.querySelectorAll('.app-content .view');
 
     function switchView(viewId) {
         // Update Nav Items
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Event Listeners for Sidebar Navigation
+    // Event Listeners for Top Navigation
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Global Action Buttons
+    // ─────────────────────── Global Action Buttons ───────────────────────
     const btnNewAnalysis = document.getElementById('btn-new-analysis');
     if (btnNewAnalysis) {
         btnNewAnalysis.addEventListener('click', () => {
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initialize Dashboard
+    // ─────────────────────── Initialize Dashboard ───────────────────────
     if (typeof initDashboard === 'function') {
         initDashboard();
     }
