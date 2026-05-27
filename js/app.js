@@ -1,18 +1,16 @@
-﻿/**
- * app.js - Main Application Controller
- * Handles view routing (SPA feel) and global initializations.
+/**
+ * app.js - Controlador Principal da Aplicação
+ * Gerencia roteamento de views (SPA) e inicializações globais.
  */
 
 const THEME_STORAGE_KEY = 'aidoc.theme.v1';
 const TOUR_STORAGE_KEY = 'aidoc.tour.completed.v1';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Feather Icons
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ View Routing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
     const loginMessage = document.getElementById('login-message');
@@ -62,22 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
             viewId = 'entry';
         }
 
-        // Update Nav Items
         navItems.forEach(item => {
-            if (item.dataset.view === viewId) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
+            item.classList.toggle('active', item.dataset.view === viewId);
         });
 
-        // Update Views
         views.forEach(view => {
-            if (view.id === `view-${viewId}`) {
-                view.classList.add('active');
-            } else {
-                view.classList.remove('active');
-            }
+            view.classList.toggle('active', view.id === `view-${viewId}`);
         });
 
         if (!options.keepTour) closeTour();
@@ -130,26 +118,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Event Listeners for Top Navigation
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const viewId = item.dataset.view;
-            if (viewId) {
-                switchView(viewId);
-            }
+            if (viewId) switchView(viewId);
         });
     });
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Global Action Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const btnNewAnalysis = document.getElementById('btn-new-analysis');
-    if (btnNewAnalysis) {
-        btnNewAnalysis.addEventListener('click', () => {
-            switchView('analysis');
-        });
-    }
+    // Botões de ação global
+    document.getElementById('btn-new-analysis')?.addEventListener('click', () => switchView('analysis'));
+    document.getElementById('btn-quick-analysis')?.addEventListener('click', () => switchView('analysis'));
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Theme System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Sistema de Tema
     const btnThemeToggle = document.getElementById('btn-theme-toggle');
     const body = document.body;
 
@@ -179,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         applyTheme(currentTheme);
     });
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Product Tour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Tour do Produto
     const btnStartTour = document.getElementById('btn-start-tour');
     let activeTour = null;
 
@@ -187,22 +168,22 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             selector: '[data-tour="dashboard"]',
             title: 'Workspace',
-            text: 'Este e seu painel principal para monitoramento e triagem em tempo real.'
+            text: 'Este é seu painel principal para monitoramento e triagem em tempo real.'
         },
         {
             selector: '[data-tour="header"]',
-            title: 'Acoes Rapidas',
-            text: 'Aqui voce inicia uma nova analise e restaura o layout padrao.'
+            title: 'Ações Rápidas',
+            text: 'Aqui você inicia uma nova análise e restaura o layout padrão.'
         },
         {
             selector: '[data-tour="widgets"]',
             title: 'Widgets Modulares',
-            text: 'Arraste, redimensione e minimize widgets conforme seu fluxo clinico.'
+            text: 'Arraste, redimensione e minimize widgets conforme seu fluxo clínico.'
         },
         {
             selector: '[data-tour="quick-analysis"]',
-            title: 'Quick Analysis',
-            text: 'Use este widget para ir direto para a tela de analise inteligente.'
+            title: 'Análise Rápida',
+            text: 'Use este widget para ir direto para a tela de análise inteligente.'
         },
         {
             selector: '#btn-theme-toggle',
@@ -225,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="tour-text"></p>
                     <div class="tour-actions">
                         <button class="btn btn-outline" data-action="skip">Pular</button>
-                        <button class="btn btn-primary" data-action="next">Proximo</button>
+                        <button class="btn btn-primary" data-action="next">Próximo</button>
                     </div>
                 </div>
             `;
@@ -256,12 +237,12 @@ document.addEventListener('DOMContentLoaded', () => {
         highlight.style.width = `${rect.width + padding * 2}px`;
         highlight.style.height = `${rect.height + padding * 2}px`;
 
-        activeTour.overlay.querySelector('.tour-step-counter').textContent = `Passo ${index + 1} de ${tourSteps.length}`;
+        activeTour.overlay.querySelector('.tour-step-counter').textContent = `Etapa ${index + 1} de ${tourSteps.length}`;
         activeTour.overlay.querySelector('.tour-title').textContent = step.title;
         activeTour.overlay.querySelector('.tour-text').textContent = step.text;
 
         const nextButton = activeTour.overlay.querySelector('[data-action="next"]');
-        nextButton.textContent = index === tourSteps.length - 1 ? 'Concluir' : 'Proximo';
+        nextButton.textContent = index === tourSteps.length - 1 ? 'Concluir' : 'Próximo';
         activeTour.currentStep = index;
     }
 
@@ -306,7 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnStartTour?.addEventListener('click', startTour);
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Initialize Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (typeof initDashboard === 'function') {
         initDashboard();
     }
@@ -317,4 +297,3 @@ document.addEventListener('DOMContentLoaded', () => {
         switchView('dashboard');
     }
 });
-
