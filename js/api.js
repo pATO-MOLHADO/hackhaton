@@ -3,7 +3,8 @@
  * Handles requests to the FastAPI backend.
  */
 
-const API_URL = 'http://localhost:8000/analisar-texto';
+const API_BASE_URL = 'https://aidoc-4li5.onrender.com';
+const API_URL = `${API_BASE_URL}/analisar-texto`;
 
 async function analyzeExamText(patientData) {
     try {
