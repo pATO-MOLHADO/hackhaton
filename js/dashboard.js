@@ -38,7 +38,8 @@ function renderTriageList(containerId, items) {
     if (!container) return;
 
     container.innerHTML = items.map((item, index) => `
-        <div class="triage-item ${item.type}" style="animation: fadeIn 0.35s ease-out ${index * 0.05}s both;">
+        <div class="triage-item ${item.type}" style="animation: fadeIn 0.35s ease-out ${index * 0.05}s both;"
+             ${item.patientId ? `data-patient-id="${item.patientId}" role="button" tabindex="0" title="Ver perfil de ${item.name}"` : ''}>
             <div class="triage-info">
                 <div class="triage-avatar">${patientInitials(item.name)}</div>
                 <div class="triage-details">
@@ -54,6 +55,17 @@ function renderTriageList(containerId, items) {
             </div>
         </div>
     `).join('');
+
+    // Clique no card abre o perfil do paciente
+    container.querySelectorAll('[data-patient-id]').forEach(card => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+            if (typeof openPatientProfile === 'function') {
+                openPatientProfile(card.dataset.patientId);
+            }
+        });
+    });
 }
 
 function renderCriticalExams() {
@@ -130,6 +142,7 @@ function getDashboardPatientItems() {
         return {
             name: patient.nome,
             id: `#${patient.id.slice(0, 8).toUpperCase()}`,
+            patientId: patient.id,
             time: latest.dateLabel || patient.updatedAt || 'Agora',
             reason: latest.comparacao_com_anterior || latest.resumo || 'Histórico clínico atualizado.',
             type: patient.estado_clinico === 'piora' ? 'critical' : status,
