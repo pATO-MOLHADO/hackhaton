@@ -17,6 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('register-form');
     const loginMessage = document.getElementById('login-message');
     const registerMessage = document.getElementById('register-message');
+    const currentUserName = document.getElementById('current-user-name');
+    const currentUserRole = document.getElementById('current-user-role');
+    const currentUserAvatar = document.getElementById('current-user-avatar');
+    let entryCompleted = false;
+    const publicViews = new Set(['entry', 'login', 'register']);
+
+    document.body.classList.add('entry-required');
 
     function setAuthMessage(element, message, isSuccess = false) {
         if (!element) return;
@@ -24,19 +31,37 @@ document.addEventListener('DOMContentLoaded', () => {
         element.classList.toggle('success', isSuccess);
     }
 
-    loginForm?.addEventListener('submit', event => {
-        event.preventDefault();
-        setAuthMessage(loginMessage, 'Tela de login pronta para integração com backend.', true);
-    });
+    function getInitials(name) {
+        return String(name || 'AIDoc')
+            .trim()
+            .split(/\s+/)
+            .map(part => part[0])
+            .slice(0, 2)
+            .join('')
+            .toUpperCase();
+    }
 
-    registerForm?.addEventListener('submit', event => {
-        event.preventDefault();
-        setAuthMessage(registerMessage, 'Tela de cadastro pronta para integração com backend.', true);
-    });
+    function setDemoUser(name, role = 'Equipe clínica') {
+        if (currentUserName) currentUserName.textContent = name;
+        if (currentUserRole) currentUserRole.textContent = role;
+        if (currentUserAvatar) currentUserAvatar.textContent = getInitials(name);
+    }
+
+    function completeEntry() {
+        entryCompleted = true;
+        document.body.classList.remove('entry-required');
+    }
+
     const navItems = document.querySelectorAll('#navbar-nav .nav-item');
     const views = document.querySelectorAll('.app-content .view');
 
-    function switchView(viewId) {
+    function switchView(viewId, options = {}) {
+        if (!entryCompleted && !publicViews.has(viewId)) {
+            setAuthMessage(loginMessage, '');
+            setAuthMessage(registerMessage, '');
+            viewId = 'entry';
+        }
+
         // Update Nav Items
         navItems.forEach(item => {
             if (item.dataset.view === viewId) {
@@ -55,8 +80,55 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        closeTour();
+        if (!options.keepTour) closeTour();
     }
+
+    loginForm?.addEventListener('submit', event => {
+        event.preventDefault();
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+
+        if (!email || !password) {
+            setAuthMessage(loginMessage, 'Preencha e-mail e senha para continuar.');
+            return;
+        }
+
+        const displayName = email.split('@')[0].replace(/[._-]+/g, ' ');
+        setDemoUser(displayName || 'Usuário AIDoc');
+        completeEntry();
+        setAuthMessage(loginMessage, 'Login validado. Abrindo workspace...', true);
+        setTimeout(() => switchView('dashboard'), 450);
+    });
+
+    registerForm?.addEventListener('submit', event => {
+        event.preventDefault();
+        const name = document.getElementById('register-name').value.trim();
+        const role = document.getElementById('register-role').value.trim();
+        const password = document.getElementById('register-password').value;
+        const confirmPassword = document.getElementById('register-confirm-password').value;
+
+        if (password !== confirmPassword) {
+            setAuthMessage(registerMessage, 'As senhas precisam ser iguais.');
+            return;
+        }
+
+        setDemoUser(name, role || 'Equipe clínica');
+        completeEntry();
+        setAuthMessage(registerMessage, 'Cadastro validado. Abrindo workspace...', true);
+        setTimeout(() => switchView('dashboard'), 450);
+    });
+
+    document.querySelectorAll('[data-view-target]').forEach(button => {
+        button.addEventListener('click', () => switchView(button.dataset.viewTarget));
+    });
+
+    document.querySelectorAll('[data-demo-access]').forEach(button => {
+        button.addEventListener('click', () => {
+            setDemoUser('Demo AIDoc', 'Protótipo');
+            completeEntry();
+            switchView('dashboard');
+        });
+    });
 
     // Event Listeners for Top Navigation
     navItems.forEach(item => {
@@ -194,6 +266,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startTour() {
+        if (!entryCompleted) {
+            switchView('entry');
+            return;
+        }
+
         switchView('dashboard');
         const overlay = ensureTourElements();
         overlay.classList.remove('hidden');
@@ -234,8 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
         initDashboard();
     }
 
-    if (!localStorage.getItem(TOUR_STORAGE_KEY)) {
-        setTimeout(startTour, 600);
+    if (location.hash === '#demo') {
+        setDemoUser('Demo AIDoc', 'Protótipo');
+        completeEntry();
+        switchView('dashboard');
     }
 });
 

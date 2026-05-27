@@ -28,7 +28,8 @@
                 </div>
                 
                 <div class="navbar-nav" id="navbar-nav">
-                    <a href="#" class="nav-item active" data-view="dashboard">Workspace</a>
+                    <a href="#" class="nav-item active" data-view="entry">Entrada</a>
+                    <a href="#" class="nav-item" data-view="dashboard">Workspace</a>
                     <a href="#" class="nav-item" data-view="analysis">IA Analysis</a>
                     <a href="#" class="nav-item" data-view="patients">Patients</a>
                     <a href="#" class="nav-item" data-view="login">Login</a>
@@ -63,6 +64,57 @@
             
             <div class="app-content">
 
+                <section id="view-entry" class="view active">
+                    <div class="site-entry">
+                        <div class="site-entry-main">
+                            <div class="logo auth-logo">
+                                <i data-feather="activity"></i>
+                                <span>AIDoc</span>
+                            </div>
+                            <h1>Entrada no site</h1>
+                            <p>Escolha como deseja acessar o ambiente clínico inteligente do AIDoc.</p>
+                            <div class="entry-actions">
+                                <button class="btn btn-primary btn-large" type="button" data-view-target="login">
+                                    <i data-feather="log-in"></i> Fazer login
+                                </button>
+                                <button class="btn btn-outline btn-large" type="button" data-view-target="register">
+                                    <i data-feather="user-plus"></i> Criar cadastro
+                                </button>
+                                <button class="btn btn-text btn-large" type="button" data-demo-access>
+                                    <i data-feather="monitor"></i> Acessar demo
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="entry-preview">
+                            <div class="entry-preview-header">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <div class="entry-preview-row strong">
+                                <i data-feather="cpu"></i>
+                                <div>
+                                    <strong>IA contextual</strong>
+                                    <small>Análise de exames com histórico do paciente.</small>
+                                </div>
+                            </div>
+                            <div class="entry-preview-row">
+                                <i data-feather="users"></i>
+                                <div>
+                                    <strong>Perfil do paciente</strong>
+                                    <small>Linha do tempo, laudos e evolução clínica.</small>
+                                </div>
+                            </div>
+                            <div class="entry-preview-row alert">
+                                <i data-feather="alert-triangle"></i>
+                                <div>
+                                    <strong>Priorização médica</strong>
+                                    <small>Destaques para piora e casos de atenção.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section id="view-login" class="view">
                     <div class="auth-page">
                         <div class="auth-brand-panel">
@@ -95,6 +147,9 @@
                                 </div>
                                 <button class="btn btn-primary btn-large w-100" type="submit">
                                     <i data-feather="log-in"></i> Entrar
+                                </button>
+                                <button class="btn btn-text w-100" type="button" data-view-target="register">
+                                    Criar uma conta
                                 </button>
                                 <p class="auth-message" id="login-message"></p>
                             </form>
@@ -146,8 +201,15 @@
                                     <label for="register-password">Senha</label>
                                     <input type="password" id="register-password" placeholder="Mínimo de 6 caracteres" minlength="6" required>
                                 </div>
+                                <div class="form-group">
+                                    <label for="register-confirm-password">Confirmar senha</label>
+                                    <input type="password" id="register-confirm-password" placeholder="Repita a senha" minlength="6" required>
+                                </div>
                                 <button class="btn btn-primary btn-large w-100" type="submit">
                                     <i data-feather="user-plus"></i> Criar cadastro
+                                </button>
+                                <button class="btn btn-text w-100" type="button" data-view-target="login">
+                                    Já tenho cadastro
                                 </button>
                                 <p class="auth-message" id="register-message"></p>
                             </form>
@@ -156,7 +218,7 @@
                 </section>
                 
                 <!-- DASHBOARD VIEW -->
-                <section id="view-dashboard" class="view active" data-tour="dashboard">
+                <section id="view-dashboard" class="view" data-tour="dashboard">
                     
                     <div class="dashboard-header modular-header workspace-hero" data-tour="header">
                         <div>
