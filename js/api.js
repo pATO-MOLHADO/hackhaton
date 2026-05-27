@@ -1,61 +1,103 @@
 /**
- * api.js - Integração com o backend FastAPI.
+ * api.js - Camada de integração com o backend AIDoc (Render)
  */
 
-const API_BASE_URL = 'https://aidoc-4li5.onrender.com';
-const API_URL = `${API_BASE_URL}/analisar-texto`;
+const API_BASE = 'https://aidoc-4li5.onrender.com';
 
-async function analyzeExamText(patientData) {
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(patientData)
-        });
+// ─── Token helpers ────────────────────────────────────────────────────────────
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.warn('API connection failed. Falling back to mock data for demonstration.', error);
-        return await getMockAnalysisResult(patientData);
-    }
+function getToken() {
+    return localStorage.getItem('aidoc.token');
 }
 
-// Fallback Mock for demonstration/hackathon if API is offline.
-function getMockAnalysisResult(data) {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const text = String(data.texto || '').toLowerCase();
-            const isCritical = text.includes('crítico') || text.includes('critico') || text.includes('urgente');
-            const hasPrevious = Array.isArray(data.historico) && data.historico.length > 0;
-            const indicatesImprovement = text.includes('melhora') || text.includes('redução') || text.includes('reducao') || text.includes('normalizou');
-            const indicatesWorse = isCritical || text.includes('piora') || text.includes('aumento') || text.includes('elevado');
-            const evolution = !hasPrevious ? 'estavel' : indicatesImprovement ? 'melhora' : indicatesWorse ? 'piora' : 'estavel';
-            const previousSummary = hasPrevious ? data.historico[0].resumo : '';
+function setSession(data) {
+    if (data.access_token) localStorage.setItem('aidoc.token', data.access_token);
+    if (data.user) localStorage.setItem('aidoc.user', JSON.stringify(data.user));
+}
 
-            resolve({
-                resumo: `O paciente ${data.nome_paciente}, ${data.idade} anos, apresenta alterações relevantes nos marcadores analisados, considerando o contexto clínico informado: ${data.condicoes || 'sem condições registradas'}.`,
-                valores_alterados: [
-                    'Leucócitos: 14.500 /uL (Referência: 4.500 a 11.000)',
-                    'Glicemia de jejum: 125 mg/dL (Referência: 70 a 99)',
-                    'Colesterol Total: 240 mg/dL (Referência: < 190)'
-                ],
-                recomendacoes: 'Avaliar possível quadro infeccioso devido à leucocitose. Repetir glicemia e solicitar hemoglobina glicada para investigação metabólica.',
-                nivel_atencao: isCritical ? 'critico' : 'atencao',
-                evolucao_clinica: evolution,
-                resumo_historico: hasPrevious
-                    ? `Histórico consolidado: ${previousSummary} No exame atual, a IA classifica a evolução como ${evolution}.`
-                    : `Primeiro registro clínico de ${data.nome_paciente}. Perfil iniciado com atenção aos marcadores alterados e às condições informadas.`,
-                comparacao_com_anterior: hasPrevious
-                    ? `Comparado ao último exame, há padrão de ${evolution} clínica com necessidade de correlação médica.`
-                    : 'Sem exame anterior salvo; este laudo passa a ser a linha de base do acompanhamento.'
-            });
-        }, 1200);
+function clearSession() {
+    localStorage.removeItem('aidoc.token');
+    localStorage.removeItem('aidoc.user');
+}
+
+function getStoredUser() {
+    try { return JSON.parse(localStorage.getItem('aidoc.user')); } catch { return null; }
+}
+
+function isLoggedIn() {
+    return !!getToken();
+}
+
+// ─── HTTP helper ──────────────────────────────────────────────────────────────
+
+async function apiRequest(path, options = {}) {
+    const token = getToken();
+    const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json', ...(options.headers || {}) };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || `Erro ${res.status}`);
+    }
+
+    return res.json();
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+async function apiSignup(email, senha, nome) {
+    const data = await apiRequest('/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify({ email, senha, nome }),
     });
+    setSession(data);
+    return data;
+}
+
+async function apiLogin(email, senha) {
+    const data = await apiRequest('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, senha }),
+    });
+    setSession(data);
+    return data;
+}
+
+function apiLogout() {
+    clearSession();
+}
+
+// ─── Análise ──────────────────────────────────────────────────────────────────
+
+async function analyzeExamText(payload) {
+    return apiRequest('/analisar-texto', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+async function analyzeExamFile(formData) {
+    const token = getToken();
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/analisar`, { method: 'POST', headers, body: formData });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || `Erro ${res.status}`);
+    }
+    return res.json();
+}
+
+async function apiChat(pergunta, contexto_exame, historico = []) {
+    return apiRequest('/chat', {
+        method: 'POST',
+        body: JSON.stringify({ pergunta, contexto_exame, historico }),
+    });
+}
+
+async function apiRecentExams(limit = 10) {
+    return apiRequest(`/exames/recentes?limit=${limit}`);
 }

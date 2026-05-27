@@ -5,20 +5,15 @@
 const THEME_STORAGE_KEY = 'aidoc.theme.v1';
 const TOUR_STORAGE_KEY  = 'aidoc.tour.completed.v1';
 
-// ─── Estado global ────────────────────────────────────────────────────────────
 let _entryCompleted = false;
 const _publicViews  = new Set(['entry', 'login', 'register']);
 
-// Expõe switchView globalmente para outros módulos (patientStore, etc.)
 window.switchView = function(viewId, options = {}) {
-    if (!_entryCompleted && !_publicViews.has(viewId)) {
-        viewId = 'entry';
-    }
+    if (!_entryCompleted && !_publicViews.has(viewId)) viewId = 'entry';
 
     document.querySelectorAll('#navbar-nav .nav-item').forEach(item => {
         item.classList.toggle('active', item.dataset.view === viewId);
     });
-
     document.querySelectorAll('.app-content .view').forEach(view => {
         view.classList.toggle('active', view.id === `view-${viewId}`);
     });
@@ -26,7 +21,6 @@ window.switchView = function(viewId, options = {}) {
     if (!options.keepTour) window.closeTour?.();
 };
 
-// ─── DOMContentLoaded ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof feather !== 'undefined') feather.replace();
 
@@ -62,6 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.remove('entry-required');
     }
 
+    // ── Restaura sessão salva ──────────────────────────────────────────────────
+    const storedUser = getStoredUser();
+    if (storedUser && isLoggedIn()) {
+        setDemoUser(storedUser.nome || storedUser.email || 'Médico', 'Equipe clínica');
+        completeEntry();
+        window.switchView('dashboard');
+    }
+
     // ── Navegação ──────────────────────────────────────────────────────────────
     document.querySelectorAll('#navbar-nav .nav-item').forEach(item => {
         item.addEventListener('click', e => {
@@ -82,11 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.getElementById('btn-new-analysis')?.addEventListener('click',   () => window.switchView('analysis'));
+    document.getElementById('btn-new-analysis')?.addEventListener('click', () => window.switchView('analysis'));
     document.getElementById('btn-quick-analysis')?.addEventListener('click', () => window.switchView('analysis'));
 
     // ── Login ──────────────────────────────────────────────────────────────────
-    loginForm?.addEventListener('submit', e => {
+    loginForm?.addEventListener('submit', async e => {
         e.preventDefault();
         const email    = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
@@ -96,18 +98,32 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const displayName = email.split('@')[0].replace(/[._-]+/g, ' ');
-        setDemoUser(displayName || 'Usuário AIDoc');
-        completeEntry();
-        setAuthMessage(loginMessage, 'Login validado. Abrindo workspace...', true);
-        setTimeout(() => window.switchView('dashboard'), 450);
+        const btn = loginForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Entrando...';
+
+        try {
+            const data = await apiLogin(email, password);
+            const nome = data.user?.nome || email.split('@')[0].replace(/[._-]+/g, ' ');
+            setDemoUser(nome, 'Equipe clínica');
+            completeEntry();
+            setAuthMessage(loginMessage, 'Login realizado! Abrindo workspace...', true);
+            setTimeout(() => window.switchView('dashboard'), 400);
+        } catch (err) {
+            setAuthMessage(loginMessage, err.message || 'Credenciais inválidas. Tente novamente.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="log-in"></i> Entrar';
+            if (typeof feather !== 'undefined') feather.replace();
+        }
     });
 
     // ── Cadastro ───────────────────────────────────────────────────────────────
-    registerForm?.addEventListener('submit', e => {
+    registerForm?.addEventListener('submit', async e => {
         e.preventDefault();
         const name            = document.getElementById('register-name').value.trim();
         const role            = document.getElementById('register-role').value.trim();
+        const email           = document.getElementById('register-email').value.trim();
         const password        = document.getElementById('register-password').value;
         const confirmPassword = document.getElementById('register-confirm-password').value;
 
@@ -116,10 +132,37 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        setDemoUser(name, role || 'Equipe clínica');
-        completeEntry();
-        setAuthMessage(registerMessage, 'Cadastro validado. Abrindo workspace...', true);
-        setTimeout(() => window.switchView('dashboard'), 450);
+        const btn = registerForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Criando conta...';
+
+        try {
+            const data = await apiSignup(email, password, name);
+            if (data.email_confirmacao_pendente) {
+                setAuthMessage(registerMessage, 'Conta criada! Confirme seu e-mail antes de entrar.', true);
+            } else {
+                setDemoUser(name, role || 'Equipe clínica');
+                completeEntry();
+                setAuthMessage(registerMessage, 'Cadastro realizado! Abrindo workspace...', true);
+                setTimeout(() => window.switchView('dashboard'), 400);
+            }
+        } catch (err) {
+            setAuthMessage(registerMessage, err.message || 'Erro ao criar conta. Tente novamente.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="user-plus"></i> Criar cadastro';
+            if (typeof feather !== 'undefined') feather.replace();
+        }
+    });
+
+    // ── Logout (clique no avatar) ──────────────────────────────────────────────
+    document.querySelector('.user-profile')?.addEventListener('click', () => {
+        if (!_entryCompleted) return;
+        if (!confirm('Deseja sair da sua conta?')) return;
+        apiLogout();
+        _entryCompleted = false;
+        document.body.classList.add('entry-required');
+        window.switchView('entry');
     });
 
     // ── Tema ───────────────────────────────────────────────────────────────────
@@ -131,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnThemeToggle) {
             btnThemeToggle.innerHTML = `<i data-feather="${isDark ? 'sun' : 'moon'}"></i>`;
             btnThemeToggle.title = isDark ? 'Tema claro' : 'Tema escuro';
-            btnThemeToggle.setAttribute('aria-label', isDark ? 'Ativar tema claro' : 'Ativar tema escuro');
         }
         if (typeof feather !== 'undefined') feather.replace();
     }
@@ -156,10 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeTour = null;
 
     const tourSteps = [
-        { selector: '[data-tour="dashboard"]',     title: 'Workspace',         text: 'Este é seu painel principal para monitoramento e triagem em tempo real.' },
-        { selector: '[data-tour="header"]',         title: 'Ações Rápidas',     text: 'Aqui você inicia uma nova análise e restaura o layout padrão.' },
-        { selector: '[data-tour="widgets"]',        title: 'Widgets Modulares', text: 'Arraste, redimensione e minimize widgets conforme seu fluxo clínico.' },
-        { selector: '[data-tour="quick-analysis"]', title: 'Análise Rápida',    text: 'Use este widget para ir direto para a tela de análise inteligente.' },
+        { selector: '[data-tour="dashboard"]',     title: 'Workspace',         text: 'Painel principal para monitoramento e triagem em tempo real.' },
+        { selector: '[data-tour="header"]',         title: 'Ações Rápidas',     text: 'Inicie uma nova análise ou restaure o layout padrão.' },
+        { selector: '[data-tour="widgets"]',        title: 'Widgets Modulares', text: 'Arraste, redimensione e minimize widgets conforme seu fluxo.' },
+        { selector: '[data-tour="quick-analysis"]', title: 'Análise Rápida',    text: 'Acesso direto à análise inteligente de exames.' },
         { selector: '#btn-theme-toggle',            title: 'Tema Claro/Escuro', text: 'Troque entre modo claro e escuro com um clique.' }
     ];
 
@@ -198,21 +240,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!target) return;
 
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const rect    = target.getBoundingClientRect();
-        const padding = 8;
-
+        const rect = target.getBoundingClientRect();
+        const p = 8;
         const hl = activeTour.overlay.querySelector('.tour-highlight');
-        hl.style.top    = `${rect.top    - padding}px`;
-        hl.style.left   = `${rect.left   - padding}px`;
-        hl.style.width  = `${rect.width  + padding * 2}px`;
-        hl.style.height = `${rect.height + padding * 2}px`;
+        hl.style.top    = `${rect.top - p}px`;
+        hl.style.left   = `${rect.left - p}px`;
+        hl.style.width  = `${rect.width + p * 2}px`;
+        hl.style.height = `${rect.height + p * 2}px`;
 
         activeTour.overlay.querySelector('.tour-step-counter').textContent = `Etapa ${index + 1} de ${tourSteps.length}`;
         activeTour.overlay.querySelector('.tour-title').textContent = step.title;
         activeTour.overlay.querySelector('.tour-text').textContent  = step.text;
-
-        const nextBtn = activeTour.overlay.querySelector('[data-action="next"]');
-        nextBtn.textContent = index === tourSteps.length - 1 ? 'Concluir' : 'Próximo';
+        activeTour.overlay.querySelector('[data-action="next"]').textContent = index === tourSteps.length - 1 ? 'Concluir' : 'Próximo';
         activeTour.currentStep = index;
     }
 
