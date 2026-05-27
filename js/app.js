@@ -8,6 +8,16 @@ const TOUR_STORAGE_KEY  = 'aidoc.tour.completed.v1';
 let _entryCompleted = false;
 const _publicViews  = new Set(['entry', 'login', 'register']);
 
+// ── Navbar: mostra itens certos conforme estado de auth ───────────────────────
+function updateNavbar(loggedIn) {
+    document.querySelectorAll('.nav-auth-only').forEach(el => {
+        el.style.display = loggedIn ? 'none' : '';
+    });
+    document.querySelectorAll('.nav-app-only').forEach(el => {
+        el.style.display = loggedIn ? '' : 'none';
+    });
+}
+
 window.switchView = function(viewId, options = {}) {
     if (!_entryCompleted && !_publicViews.has(viewId)) viewId = 'entry';
 
@@ -33,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUserAvatar = document.getElementById('current-user-avatar');
 
     document.body.classList.add('entry-required');
+    updateNavbar(false);
 
     function setAuthMessage(el, msg, isSuccess = false) {
         if (!el) return;
@@ -54,6 +65,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function completeEntry() {
         _entryCompleted = true;
         document.body.classList.remove('entry-required');
+        updateNavbar(true);
+    }
+
+    function doLogout() {
+        apiLogout();
+        _entryCompleted = false;
+        document.body.classList.add('entry-required');
+        updateNavbar(false);
+        window.switchView('entry');
     }
 
     // ── Restaura sessão salva ──────────────────────────────────────────────────
@@ -81,11 +101,19 @@ document.addEventListener('DOMContentLoaded', () => {
             setDemoUser('Demo AIDoc', 'Protótipo');
             completeEntry();
             window.switchView('dashboard');
+            _autoStartTour();
         });
     });
 
-    document.getElementById('btn-new-analysis')?.addEventListener('click', () => window.switchView('analysis'));
+    document.getElementById('btn-new-analysis')?.addEventListener('click',   () => window.switchView('analysis'));
     document.getElementById('btn-quick-analysis')?.addEventListener('click', () => window.switchView('analysis'));
+
+    // ── Logout ─────────────────────────────────────────────────────────────────
+    document.querySelector('.user-profile')?.addEventListener('click', () => {
+        if (!_entryCompleted) return;
+        if (!confirm('Deseja sair da sua conta?')) return;
+        doLogout();
+    });
 
     // ── Login ──────────────────────────────────────────────────────────────────
     loginForm?.addEventListener('submit', async e => {
@@ -108,7 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
             setDemoUser(nome, 'Equipe clínica');
             completeEntry();
             setAuthMessage(loginMessage, 'Login realizado! Abrindo workspace...', true);
-            setTimeout(() => window.switchView('dashboard'), 400);
+            setTimeout(() => {
+                window.switchView('dashboard');
+                _autoStartTour();
+            }, 400);
         } catch (err) {
             setAuthMessage(loginMessage, err.message || 'Credenciais inválidas. Tente novamente.');
         } finally {
@@ -144,7 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 setDemoUser(name, role || 'Equipe clínica');
                 completeEntry();
                 setAuthMessage(registerMessage, 'Cadastro realizado! Abrindo workspace...', true);
-                setTimeout(() => window.switchView('dashboard'), 400);
+                setTimeout(() => {
+                    window.switchView('dashboard');
+                    _autoStartTour();
+                }, 400);
             }
         } catch (err) {
             setAuthMessage(registerMessage, err.message || 'Erro ao criar conta. Tente novamente.');
@@ -153,16 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerHTML = '<i data-feather="user-plus"></i> Criar cadastro';
             if (typeof feather !== 'undefined') feather.replace();
         }
-    });
-
-    // ── Logout (clique no avatar) ──────────────────────────────────────────────
-    document.querySelector('.user-profile')?.addEventListener('click', () => {
-        if (!_entryCompleted) return;
-        if (!confirm('Deseja sair da sua conta?')) return;
-        apiLogout();
-        _entryCompleted = false;
-        document.body.classList.add('entry-required');
-        window.switchView('entry');
     });
 
     // ── Tema ───────────────────────────────────────────────────────────────────
@@ -193,38 +217,150 @@ document.addEventListener('DOMContentLoaded', () => {
         applyTheme(currentTheme);
     });
 
-    // ── Tour ───────────────────────────────────────────────────────────────────
-    const btnStartTour = document.getElementById('btn-start-tour');
-    let activeTour = null;
-
+    // ── Tour médico ────────────────────────────────────────────────────────────
     const tourSteps = [
-        { selector: '[data-tour="dashboard"]',     title: 'Workspace',         text: 'Painel principal para monitoramento e triagem em tempo real.' },
-        { selector: '[data-tour="header"]',         title: 'Ações Rápidas',     text: 'Inicie uma nova análise ou restaure o layout padrão.' },
-        { selector: '[data-tour="widgets"]',        title: 'Widgets Modulares', text: 'Arraste, redimensione e minimize widgets conforme seu fluxo.' },
-        { selector: '[data-tour="quick-analysis"]', title: 'Análise Rápida',    text: 'Acesso direto à análise inteligente de exames.' },
-        { selector: '#btn-theme-toggle',            title: 'Tema Claro/Escuro', text: 'Troque entre modo claro e escuro com um clique.' }
+        {
+            selector: '.top-navbar',
+            title: '👋 Bem-vindo ao AIDoc!',
+            text: 'Esta é sua barra de navegação. Acesse o Workspace, a Análise IA e os Perfis de Pacientes a qualquer momento.'
+        },
+        {
+            selector: '[data-tour="header"]',
+            title: '⚡ Ações Rápidas',
+            text: 'Clique em "Nova Análise" para enviar um laudo imediatamente. Use "Redefinir Layout" para restaurar o painel ao estado original.'
+        },
+        {
+            selector: '#w-critical',
+            title: '🚨 Exames Críticos',
+            text: 'Aqui aparecem os pacientes com marcadores críticos identificados pela IA. Clique em qualquer card para ver o perfil completo.'
+        },
+        {
+            selector: '#w-quick',
+            title: '🧪 Análise Rápida',
+            text: 'Clique em "Analisar Novo Laudo" para ir direto à tela de análise. Você pode colar o texto do exame ou fazer upload de um PDF.'
+        },
+        {
+            selector: '#w-insights',
+            title: '📊 Visão Geral da IA',
+            text: 'Estatísticas consolidadas: total de exames analisados, pacientes acompanhados e casos com piora clínica detectada.'
+        },
+        {
+            selector: '#w-recent',
+            title: '👥 Pacientes Recentes',
+            text: 'Lista de pacientes em rotina e acompanhamento. Clique em um nome para abrir o histórico clínico completo com linha do tempo.'
+        },
+        {
+            selector: '[data-view="analysis"]',
+            title: '🤖 Análise IA',
+            text: 'Na aba "Análise IA" você envia laudos por texto ou PDF. A IA DeepSeek identifica valores alterados, classifica urgência e sugere condutas.'
+        },
+        {
+            selector: '[data-view="patients"]',
+            title: '📋 Perfil do Paciente',
+            text: 'Cada paciente tem um perfil com histórico de exames, evolução clínica e comparação entre laudos anteriores e atuais.'
+        },
+        {
+            selector: '#btn-theme-toggle',
+            title: '🌙 Tema Claro / Escuro',
+            text: 'Alterne entre modo claro e escuro conforme sua preferência ou ambiente de trabalho.'
+        },
+        {
+            selector: '.user-profile',
+            title: '✅ Tudo pronto!',
+            text: 'Clique no seu avatar para sair da conta. Agora você já conhece o AIDoc — comece analisando o primeiro laudo!'
+        }
     ];
 
-    function ensureTourElements() {
+    let activeTour = null;
+
+    function _ensureTourOverlay() {
         let overlay = document.getElementById('tour-overlay');
         if (!overlay) {
             overlay = document.createElement('div');
             overlay.id = 'tour-overlay';
             overlay.className = 'tour-overlay hidden';
             overlay.innerHTML = `
+                <div class="tour-backdrop"></div>
                 <div class="tour-highlight"></div>
                 <div class="tour-card">
                     <div class="tour-step-counter"></div>
                     <h3 class="tour-title"></h3>
                     <p class="tour-text"></p>
                     <div class="tour-actions">
-                        <button class="btn btn-outline" data-action="skip">Pular</button>
-                        <button class="btn btn-primary" data-action="next">Próximo</button>
+                        <button class="btn btn-outline" data-action="skip">Pular tour</button>
+                        <button class="btn btn-primary" data-action="next">Próximo →</button>
                     </div>
                 </div>`;
             document.body.appendChild(overlay);
+
+            overlay.addEventListener('click', event => {
+                if (!activeTour) return;
+                const action = event.target.closest('[data-action]')?.dataset.action;
+                if (!action) return;
+                if (action === 'skip') {
+                    localStorage.setItem(TOUR_STORAGE_KEY, 'true');
+                    window.closeTour();
+                    return;
+                }
+                const next = activeTour.currentStep + 1;
+                if (next >= tourSteps.length) {
+                    localStorage.setItem(TOUR_STORAGE_KEY, 'true');
+                    window.closeTour();
+                    return;
+                }
+                _showTourStep(next);
+            });
         }
         return overlay;
+    }
+
+    function _showTourStep(index) {
+        if (!activeTour) return;
+        const step   = tourSteps[index];
+        const target = document.querySelector(step.selector);
+        if (!target) { _showTourStep(index + 1); return; }
+
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        setTimeout(() => {
+            const rect = target.getBoundingClientRect();
+            const p = 10;
+            const hl = activeTour.overlay.querySelector('.tour-highlight');
+            hl.style.top    = `${rect.top    + window.scrollY - p}px`;
+            hl.style.left   = `${rect.left   + window.scrollX - p}px`;
+            hl.style.width  = `${rect.width  + p * 2}px`;
+            hl.style.height = `${rect.height + p * 2}px`;
+
+            // Posiciona o card abaixo ou acima do elemento
+            const card = activeTour.overlay.querySelector('.tour-card');
+            const cardTop = rect.bottom + window.scrollY + 16;
+            const cardLeft = Math.min(Math.max(rect.left + window.scrollX, 16), window.innerWidth - 340);
+            card.style.top  = `${cardTop}px`;
+            card.style.left = `${cardLeft}px`;
+
+            activeTour.overlay.querySelector('.tour-step-counter').textContent = `Etapa ${index + 1} de ${tourSteps.length}`;
+            activeTour.overlay.querySelector('.tour-title').textContent = step.title;
+            activeTour.overlay.querySelector('.tour-text').textContent  = step.text;
+            activeTour.overlay.querySelector('[data-action="next"]').textContent =
+                index === tourSteps.length - 1 ? '✓ Concluir' : 'Próximo →';
+
+            activeTour.currentStep = index;
+        }, 200);
+    }
+
+    function _startTour() {
+        if (!_entryCompleted) return;
+        window.switchView('dashboard', { keepTour: true });
+        const overlay = _ensureTourOverlay();
+        overlay.classList.remove('hidden');
+        activeTour = { overlay, currentStep: 0 };
+        _showTourStep(0);
+    }
+
+    function _autoStartTour() {
+        if (!localStorage.getItem(TOUR_STORAGE_KEY)) {
+            setTimeout(_startTour, 800);
+        }
     }
 
     window.closeTour = function() {
@@ -233,50 +369,12 @@ document.addEventListener('DOMContentLoaded', () => {
         activeTour = null;
     };
 
-    function showTourStep(index) {
-        if (!activeTour) return;
-        const step   = tourSteps[index];
-        const target = document.querySelector(step.selector);
-        if (!target) return;
+    window.addEventListener('resize', () => { if (activeTour) _showTourStep(activeTour.currentStep); });
 
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const rect = target.getBoundingClientRect();
-        const p = 8;
-        const hl = activeTour.overlay.querySelector('.tour-highlight');
-        hl.style.top    = `${rect.top - p}px`;
-        hl.style.left   = `${rect.left - p}px`;
-        hl.style.width  = `${rect.width + p * 2}px`;
-        hl.style.height = `${rect.height + p * 2}px`;
-
-        activeTour.overlay.querySelector('.tour-step-counter').textContent = `Etapa ${index + 1} de ${tourSteps.length}`;
-        activeTour.overlay.querySelector('.tour-title').textContent = step.title;
-        activeTour.overlay.querySelector('.tour-text').textContent  = step.text;
-        activeTour.overlay.querySelector('[data-action="next"]').textContent = index === tourSteps.length - 1 ? 'Concluir' : 'Próximo';
-        activeTour.currentStep = index;
-    }
-
-    function startTour() {
-        if (!_entryCompleted) { window.switchView('entry'); return; }
-        window.switchView('dashboard');
-        const overlay = ensureTourElements();
-        overlay.classList.remove('hidden');
-        activeTour = { overlay, currentStep: 0 };
-        showTourStep(0);
-    }
-
-    const tourOverlay = ensureTourElements();
-    tourOverlay.addEventListener('click', event => {
-        if (!activeTour) return;
-        const action = event.target.closest('[data-action]')?.dataset.action;
-        if (!action) return;
-        if (action === 'skip') { localStorage.setItem(TOUR_STORAGE_KEY, 'true'); window.closeTour(); return; }
-        const next = activeTour.currentStep + 1;
-        if (next >= tourSteps.length) { localStorage.setItem(TOUR_STORAGE_KEY, 'true'); window.closeTour(); return; }
-        showTourStep(next);
+    document.getElementById('btn-start-tour')?.addEventListener('click', () => {
+        localStorage.removeItem(TOUR_STORAGE_KEY);
+        _startTour();
     });
-
-    window.addEventListener('resize', () => { if (activeTour) showTourStep(activeTour.currentStep); });
-    btnStartTour?.addEventListener('click', startTour);
 
     // ── Init ───────────────────────────────────────────────────────────────────
     if (typeof initDashboard === 'function') initDashboard();
@@ -285,5 +383,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setDemoUser('Demo AIDoc', 'Protótipo');
         completeEntry();
         window.switchView('dashboard');
+        _autoStartTour();
     }
 });

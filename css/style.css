@@ -2624,3 +2624,35 @@ body[data-theme="dark"] .triage-item.critical {
         justify-content: center;
     }
 }
+
+/* ==========================================================================
+   NAVBAR DINÂMICA — esconde login/cadastro após autenticar
+   ========================================================================== */
+.nav-app-only { display: none; }
+.nav-auth-only { display: inline-flex; }
+
+/* Tour backdrop escurece o fundo */
+.tour-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.62);
+    pointer-events: none;
+}
+
+/* Tour card fixo no canto inferior direito */
+.tour-card {
+    position: fixed !important;
+    right: 24px !important;
+    bottom: 24px !important;
+    top: auto !important;
+    left: auto !important;
+    width: min(360px, calc(100vw - 32px));
+    z-index: 1300;
+    animation: fadeIn 0.2s ease;
+}
+
+/* Highlight do tour */
+.tour-highlight {
+    z-index: 1250;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
