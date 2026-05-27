@@ -2,7 +2,7 @@
  * dashboard.js - Modular clinical workspace.
  */
 
-const DASHBOARD_STORAGE_KEY = 'aidoc.modularDashboard.v1';
+const DASHBOARD_STORAGE_KEY = 'aidoc.modularDashboard.v2';
 
 function initDashboard() {
     renderDateHeader();
@@ -26,7 +26,7 @@ function renderDateHeader() {
         month: 'long'
     });
 
-    el.textContent = `Hoje e ${today}. Arraste, redimensione e minimize widgets conforme seu fluxo clinico.`;
+    el.textContent = `Hoje: ${today}. Prioridades, fluxo e IA organizados para leitura clinica rapida.`;
 }
 
 function patientInitials(name) {
@@ -57,7 +57,8 @@ function renderTriageList(containerId, items) {
 }
 
 function renderCriticalExams() {
-    renderTriageList('triage-critical', [
+    const patientItems = getDashboardPatientItems().filter(item => item.type === 'critical' || item.evolution === 'piora').slice(0, 3);
+    renderTriageList('triage-critical', patientItems.length ? patientItems : [
         { name: 'Roberto Silva', id: '#P-4592', time: '5 min', reason: 'Troponina elevada com risco cardiaco.', type: 'critical', action: 'Agir agora' },
         { name: 'Helena Duarte', id: '#P-4596', time: '12 min', reason: 'D-dimero alto e dispneia relatada.', type: 'critical', action: 'Priorizar' },
         { name: 'Julia Costa', id: '#P-4590', time: '45 min', reason: 'Glicemia 250 mg/dL aguardando retorno.', type: 'attention', action: 'Revisar' }
@@ -67,11 +68,14 @@ function renderCriticalExams() {
 function renderAIInsights() {
     const container = document.getElementById('global-insights');
     if (!container) return;
+    const patients = typeof getAllPatientProfiles === 'function' ? getAllPatientProfiles() : [];
+    const exams = patients.reduce((total, patient) => total + (patient.exames?.length || 0), 0);
+    const worsening = patients.filter(patient => patient.estado_clinico === 'piora').length;
 
     const stats = [
-        { label: 'Exames analisados', value: '1.284', note: '+12% na semana', icon: 'activity' },
-        { label: 'Alertas criticos', value: '4', note: '2 precisam acao', icon: 'alert-triangle' },
-        { label: 'Tempo medio salvo', value: '38h', note: 'triagem automatizada', icon: 'zap' }
+        { label: 'Exames analisados', value: exams || '1.284', note: exams ? 'memória clínica local' : '+12% na semana', icon: 'activity' },
+        { label: 'Pacientes acompanhados', value: patients.length || '4', note: patients.length ? 'perfis com histórico' : 'base demonstrativa', icon: 'users' },
+        { label: 'Piora clínica', value: worsening || '2', note: worsening ? 'precisam revisão' : 'precisam acao', icon: 'alert-triangle' }
     ];
 
     container.innerHTML = stats.map(stat => `
@@ -110,11 +114,29 @@ function renderPatientFlow() {
 }
 
 function renderRecentPatients() {
-    renderTriageList('triage-routine', [
+    const patientItems = getDashboardPatientItems().filter(item => item.type !== 'critical').slice(0, 4);
+    renderTriageList('triage-routine', patientItems.length ? patientItems : [
         { name: 'Ricardo Mendes', id: '#P-4589', time: '2h', reason: 'Hemograma sem alteracoes relevantes.', type: 'routine', action: 'Aprovar' },
         { name: 'Fernanda Lima', id: '#P-4591', time: '3h', reason: 'Colesterol acima da meta individual.', type: 'attention', action: 'Revisar' },
         { name: 'Mariana Torres', id: '#P-4586', time: 'Ontem', reason: 'Retorno pos-consulta registrado.', type: 'routine', action: 'Aprovar' }
     ]);
+}
+
+function getDashboardPatientItems() {
+    if (typeof getAllPatientProfiles !== 'function') return [];
+    return getAllPatientProfiles().map(patient => {
+        const latest = patient.exames?.[0] || {};
+        const status = latest.nivel_atencao === 'critico' ? 'critical' : latest.nivel_atencao === 'atencao' ? 'attention' : 'routine';
+        return {
+            name: patient.nome,
+            id: `#${patient.id.slice(0, 8).toUpperCase()}`,
+            time: latest.dateLabel || patient.updatedAt || 'Agora',
+            reason: latest.comparacao_com_anterior || latest.resumo || 'Histórico clínico atualizado.',
+            type: patient.estado_clinico === 'piora' ? 'critical' : status,
+            action: patient.estado_clinico === 'piora' ? 'Priorizar' : 'Revisar',
+            evolution: patient.estado_clinico
+        };
+    });
 }
 
 function renderUpcomingReviews() {

@@ -16,6 +16,13 @@ function renderResults(data) {
 
     const level = data.nivel_atencao ? data.nivel_atencao.toLowerCase() : 'normal';
     const props = statusProps[level] || statusProps['normal'];
+    const evolutionProps = {
+        melhora: { label: 'Melhora', icon: 'arrow-up-right', className: 'positive' },
+        piora: { label: 'Piora', icon: 'arrow-down-right', className: 'negative' },
+        estavel: { label: 'Estável', icon: 'arrow-right', className: 'stable' }
+    };
+    const evolution = String(data.evolucao_clinica || 'estavel').toLowerCase();
+    const evolutionMeta = evolutionProps[evolution] || evolutionProps.estavel;
 
     // Build TL;DR Text (Simulated if not provided)
     const tldrText = data.resumo || "Resumo não disponível. Exame com alterações pendentes de revisão médica.";
@@ -99,6 +106,21 @@ function renderResults(data) {
 
             <div class="clinical-tldr ${props.colorClass}">
                 ${tldrText}
+            </div>
+
+            <div class="clinical-context-grid">
+                <div class="context-card ${evolutionMeta.className}">
+                    <span>Evolução clínica</span>
+                    <strong><i data-feather="${evolutionMeta.icon}"></i>${evolutionMeta.label}</strong>
+                </div>
+                <div class="context-card">
+                    <span>Comparação com anterior</span>
+                    <p>${data.comparacao_com_anterior || 'Sem exame anterior salvo para comparação.'}</p>
+                </div>
+                <div class="context-card">
+                    <span>Resumo histórico</span>
+                    <p>${data.resumo_historico || 'Histórico clínico iniciado a partir desta análise.'}</p>
+                </div>
             </div>
 
             ${alteredValuesHTML}

@@ -37,12 +37,15 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         // 1. Get Data
-        const requestData = {
+        const formData = {
             nome_paciente: document.getElementById('patient-name').value,
             idade: document.getElementById('patient-age').value,
             condicoes: document.getElementById('patient-conditions').value,
             texto: document.getElementById('exam-text').value
         };
+        const requestData = typeof buildContextualAnalysisPayload === 'function'
+            ? buildContextualAnalysisPayload(formData)
+            : formData;
 
         // 2. Show Loading State
         resultsEmpty.classList.add('hidden');
@@ -66,6 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Save to localStorage
             saveToHistory(requestData, resultData);
+            if (typeof savePatientAnalysis === 'function') {
+                savePatientAnalysis(requestData, resultData);
+            }
             
             // Trigger dashboard refresh if function exists
             if (typeof initDashboard === 'function') {
